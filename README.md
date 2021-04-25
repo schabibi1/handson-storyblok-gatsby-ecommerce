@@ -207,3 +207,217 @@ The steps below are the same in multilingual blog post.
 From here, we'll create more components looks like shop ovewview.
 
 # Create ProductGrid component
+
+- Open `components/DynamicComponent/index.js`
+- Add ProductGrid component
+
+ `components/DynamicComponent/index.js`
+
+```javascript
+import React from 'react'
+import Teaser from '../Teaser'
+import Feature from '../Feature'
+import Grid from '../Grid'
+import Placeholder from '../Placeholder'
+import ProductGrid from '../ProductGrid'
+
+const Components = {
+  'teaser': Teaser,
+  'feature': Feature,
+  'grid': Grid,
+  // Add ProductGrid component
+  'productGrid': ProductGrid
+}
+
+const Component = ({ blok }) => {
+  if (typeof Components[blok.component] !== 'undefined') {
+    const Component = Components[blok.component]
+    return <Component blok={blok} />
+  }
+  return blok.component ? <Placeholder componentName={blok.component} /> : null
+}
+
+export default Component
+```
+
+- Open `components/ProductGrid/index.js`
+- Import `SbEditable`, pass `blok` props, & wrap render values with `SbEditable` component wrapper
+
+ `components/ProductGrid/index.js`
+
+```javascript
+import React, { useContext } from 'react'
+import { useStaticQuery, graphql, Link } from 'gatsby'
+
+import StoreContext from '~/context/StoreContext'
+import { Grid, Product, Title, PriceTag } from './styles'
+import { Img } from '~/utils/styles'
+
+// import SbEditable
+import SbEditable from 'storyblok-react'
+
+// pass blok props
+const ProductGrid = ({ blok }) => {
+  // logging out what blok props display
+  console.log(blok);
+  const {
+    store: { checkout },
+  } = useContext(StoreContext)
+  const { allShopifyProduct } = useStaticQuery(
+    graphql`
+      query {
+        allShopifyProduct(sort: { fields: [createdAt], order: DESC }) {
+          edges {
+            node {
+              id
+              title
+              handle
+              createdAt
+              images {
+                id
+                originalSrc
+                localFile {
+                  childImageSharp {
+                    fluid(maxWidth: 910) {
+                      ...GatsbyImageSharpFluid_withWebp_tracedSVG
+                    }
+                  }
+                }
+              }
+              variants {
+                price
+              }
+            }
+          }
+        }
+      }
+    `
+  )
+
+  const getPrice = price =>
+    Intl.NumberFormat(undefined, {
+      currency: checkout.currencyCode ? checkout.currencyCode : 'EUR',
+      minimumFractionDigits: 2,
+      style: 'currency',
+    }).format(parseFloat(price ? price : 0))
+
+// wrap JSX with SbEditable component
+  return (
+    <SbEditable content={blok}>
+      <Grid>
+        {allShopifyProduct.edges ? (
+          allShopifyProduct.edges.map(
+            ({
+              node: {
+                id,
+                handle,
+                title,
+                images: [firstImage],
+                variants: [firstVariant],
+              },
+            }) => (
+              <Product key={id}>
+                <Link to={`/product/${handle}/`}>
+                  {firstImage && firstImage.localFile && (
+                    <Img
+                      fluid={firstImage.localFile.childImageSharp.fluid}
+                      alt={handle}
+                    />
+                  )}
+                </Link>
+                <Title>{title}</Title>
+                <PriceTag>{getPrice(firstVariant.price)}</PriceTag>
+              </Product>
+            )
+          )
+        ) : (
+          <p>No Products found!</p>
+        )}
+      </Grid>
+    </SbEditable>
+  )
+}
+
+export default ProductGrid
+
+```
+
+- Import ProductGrid component into `pages/index.js` page.
+
+ `pages/index.js`
+
+```javascript
+import React from 'react'
+import Page from '../components/Page'
+import { graphql } from 'gatsby'
+import StoryblokService from '../utils/storyblok-service'
+
+// import SEO from '~/components/seo'
+// import ProductGrid component
+import ProductGrid from '~/components/ProductGrid'
+
+export const query = graphql`
+  {
+    story: storyblokEntry(full_slug: { eq: "home" }) {
+      name
+      content
+      full_slug
+      uuid
+    }
+  }
+`
+
+class IndexPage extends React.Component {
+  state = {
+    story: {
+      content: this.props.data.story ? JSON.parse(this.props.data.story.content) : {}
+    }
+  }
+
+  async getInitialStory() {
+    StoryblokService.setQuery(this.props.location.search)
+    let { data: { story } } = await StoryblokService.get(`cdn/stories/${this.props.data.story.full_slug}`)
+    return story
+  }
+
+  async componentDidMount() {
+    let story = await this.getInitialStory()
+    if (story.content) this.setState({ story })
+    setTimeout(() => StoryblokService.initEditor(this), 200)
+  }
+
+  render() {
+    // return ProductGrid component
+    return (
+      <>
+        <Page blok={this.state.story.content} />
+        <ProductGrid blok={this.state.story.content} />
+      </>
+    )
+  }
+}
+
+export default IndexPage
+```
+
+When you see the browser, you can see objects which is returned from ProductGrid's `blok` props in the dev tools.
+
+![ProductGrid_blok_props](./images/ProductGrid_blok_props.png)
+
+Also, ProductGird component appeared.
+
+![ProductGrid_visual_editor](./images/ProductGrid_visual_editor.png)
+
+But we still can't edit from visual editor for a moment.
+
+
+# Editing Notes
+
+Realized actually need to setup those first in an order below.
+
+1. [Storefront Setup](https://www.storyblok.com/docs/guide/integrations/ecommerce/storefront-setup)
+2. [eCommerce Field-Type Plugin](https://www.storyblok.com/docs/guide/integrations/ecommerce/integration-plugin)
+3. [How to Build a Storefront with Next.js and BigCommerce](https://www.storyblok.com/tp/storefront-next-bigcommerce) -> Need to write this part with Gatsby ver
+4. [Shopify](https://www.storyblok.com/docs/guide/integrations/ecommerce/shopify)
+
+Delete Teaser and Grid components.
