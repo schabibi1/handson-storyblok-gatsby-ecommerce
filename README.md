@@ -95,3 +95,4 @@ $ gatsby develop
 # Notes
 
 - Start from "eCommerce Field-Type Plugin"
+- After that, starting from "eCommerce Integration" in ["How to Build a Storefront with Next.js and BigCommerce"](https://www.storyblok.com/tp/storefront-next-bigcommerce)
