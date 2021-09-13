@@ -103,6 +103,10 @@ For more environment variables, you can check Gatsby's documentation.
 $ gatsby develop
 ```
 
+> Managing cart within Gatsby requires to check the box next to `Allow this app to access your storefront data using the Storefront API` and make sure to check `Read and modify checkouts`. It throws an error of "Error in function eval in ./node_modules/shopify-buy/index.js" (Source: [gatsby-source-shopify](https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby-source-shopify#enabling-cart-and-checkout-features))
+
+![shopify_checkout_setup](./images/read-modify-checkouts.png)
+
 # Notes
 
 - Start from "eCommerce Field-Type Plugin"
