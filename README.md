@@ -107,6 +107,137 @@ $ gatsby develop
 
 ![shopify_checkout_setup](./images/read-modify-checkouts.png)
 
+# Enable real-time Visual Editor
+
+- Add `storyblokEntry` query in `src/pages/index.jsx`
+- Parse `storyblokEntry` query in `src/pages/index.jsx`
+- Import `@storyblok/storyblok-editable` and call
+- Delete Hero component from Gatsby
+- Test fetching quey (i.e. something easy to fetch without mapping)
+- Import DynamicComponent and call in JSX scope
+
+```javascript
+import * as React from "react"
+import { graphql } from "gatsby"
+import { Layout } from "../components/layout"
+import { ProductListing } from "../components/product-listing"
+import { sbEditable } from "@storyblok/storyblok-editable"
+import DynamicComponent from "../components/dynamicComponent"
+// import {
+//   container,
+//   intro,
+//   callOut,
+//   callToAction,
+//   deployButton,
+// } from "./index.module.css"
+
+export const query = graphql`
+  query {
+    shopifyCollection(handle: { eq: "frontpage" }) {
+      products {
+        ...ProductCard
+      }
+    }
+    storyblokEntry(full_slug: { eq: "home" }) {
+      content
+    }
+  }
+`
+// function Hero (props) {
+//   return (
+//     <div className={container}>
+//       <h1 className={intro}>Welcome to the GatsbyJS + Shopify Demo Store.</h1>
+//       {/* {!!process.env.GATSBY_DEMO_STORE && (
+//         <>
+//           <p className={callOut}>
+//             It's a proof-of-concept in a box, with 10k products and 30k variants
+//             to help you get to proof-of-concept as soon as right now.
+//           </p>
+//           <p className={callToAction}>
+//             Hook it up to your own Shopify store data and start customizing in
+//             minutes by deploying it to Gatsby Cloud for free. Grab your Shopify
+//             store credentials and
+//             <a href="https://www.gatsbyjs.com/dashboard/deploynow?url=https://github.com/gatsbyjs/gatsby-starter-shopify&utm_campaign=shopify-starter">
+//               <img
+//                 src="https://www.gatsbyjs.com/deploynow.png"
+//                 alt="Deploy to Gatsby Cloud"
+//                 className={deployButton}
+//               />
+//             </a>
+//           </p>
+//         </>
+//       )} */}
+//     </div>
+//   )
+// }
+
+export default function IndexPage({ data }) {
+  let story = data.storyblokEntry
+  story.content = JSON.parse(story.content)
+  // console.log(story.content)
+
+  const components = story.content.body.map(blok => {
+    return (<DynamicComponent blok={blok} key={blok._uid} />)
+  })
+  // console.log(components)
+
+  return (
+    <Layout>
+      <div {...sbEditable(story.content)}>
+        <h1>{ story.content._uid }</h1>
+        { components }
+        {/* <Hero /> */}
+        <ProductListing products={data?.shopifyCollection?.products} />
+      </div>
+    </Layout>
+  )
+}
+
+```
+
+- Create DynamicComponent file in `src/components/dynamicComponent.jsx`
+- Import Hero component
+- Conditional statement to display blocks or error message
+- Import `@storyblok/storyblok-editable` and call
+
+```javascript
+import React from "react"
+import { sbEditable } from "@storyblok/storyblok-editable"
+import Hero from './hero'
+
+const Components = {
+  'hero': Hero,
+}
+
+const DynamicComponent = ({ blok }) => {
+  if (typeof Components[blok.component] !== 'undefined') {
+    const Component = Components[blok.component]
+    return (<div {...sbEditable(blok)}><Component blok={blok} /></div>)
+  }
+  return (<p>The component <strong>{blok.component}</strong> has not been created yet.</p>)
+}
+
+export default DynamicComponent
+```
+
+- Create Hero component file in `src/component/hero.jsx`
+- Pass over the queries
+
+```javascript
+import * as React from 'react'
+import { intro } from "../pages/index.module.css"
+
+const Hero = ({ blok }) => (
+  <div>
+    <h1 className={intro}>{ blok.headline }</h1>
+  </div>
+)
+
+export default Hero
+```
+
+- Create Hooks component file
+
 # Notes
 
 - Start from "eCommerce Field-Type Plugin"
