@@ -20,11 +20,11 @@ $ npm install -g gatsby-cli
 
 - Create e-commerce starter with `gatsby-shopify-starter`
 
-> [Gatsby: gatsby-shopify-starter](https://www.gatsbyjs.com/starters/AlexanderProd/gatsby-shopify-starter)
+> [Gatsby: gatsby-starter-shopify](https://www.gatsbyjs.com/starters/gatsbyjs/gatsby-starter-shopify)
 
 ```
-$ gatsby new gatsby-shopify-starter https://github.com/AlexanderProd/gatsby-shopify-starter
-$ cd gatsby-shopify-starter
+$ gatsby new gatsby-starter-shopify https://github.com/gatsbyjs/gatsby-starter-shopify
+$ cd gatsby-starter-shopify
 $ gatsby develop
 ```
 
@@ -33,10 +33,11 @@ $ gatsby develop
 # Connect Storyblok
 
 - Login to Storyblok
-- Install `gatsby-source-plugin` to link Storyblok and GraphQL & Install `storyblok-react` for editor interface
-
+- Install `gatsby-source-storyblok` to link Storyblok and GraphQL
+- Install `@storyblok/storyblok-editable` for editor interface
+- Install `storyblok-js-client`
 ```
-$ npm install --save gatsby-source-storyblok storyblok-react
+$ npm install --save gatsby-source-storyblok @storyblok/storyblok-editable storyblok-js-client
 ```
 
 - Settings -> General Tab -> Fill **"Location (default environment)"** as **"http://localhost:8000/"**
@@ -50,14 +51,16 @@ $ npm install --save gatsby-source-storyblok storyblok-react
  `.env.development` & `.env.production`
 
 ```
-SHOP_NAME=DOMAIN_NAME_OF_YOUR_SHOPIFY_SHOP_NAME
-SHOPIFY_ACCESS_TOKEN=YOUR_STOREFRONT_API
-STORYBLOK_TOKEN=YOUR_PREVIEW_TOKEN
+GATSBY_STOREFRONT_ACCESS_TOKEN=YOUR_STORE_ACCESS_TOKEN
+GATSBY_SHOPIFY_STORE_URL=your-shop.myshopify.com
+SHOPIFY_ADMIN_PASSWORD=YOUR_SHOPIFY_ADMIN_PASSWORD
 ```
 
 You can find the domain name of your Shopify shop name & storefront API from this step we completed.
 
 > [Storyblok: Shopify](https://www.storyblok.com/docs/guide/integrations/ecommerce/shopify)
+
+> Admin password can be found in `Apps → manage private apps → Admin API → Password`
 
 - Configure the preview token from `.env.development` & `.env.production` files into `gatsby-config.js` file
 
@@ -69,6 +72,14 @@ module.exports = {
     title: 'Gatsby Default Starter',
   },
   plugins: [
+    {
+      resolve: "gatsby-source-shopify",
+      options: {
+        password: process.env.SHOPIFY_ADMIN_PASSWORD,
+        storeUrl: process.env.GATSBY_SHOPIFY_STORE_URL,
+        shopifyConnections: ["collections"],
+      },
+    },
     {
       resolve: 'gatsby-source-storyblok',
       options: {
@@ -86,7 +97,7 @@ For more environment variables, you can check Gatsby's documentation.
 
 > [Gatsby: Environment Variables](https://www.gatsbyjs.com/docs/how-to/local-development/environment-variables/)
 
-- Start the servert to check everything works
+- Start the server to check everything works
 
 ```
 $ gatsby develop
